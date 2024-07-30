@@ -24,13 +24,27 @@ def procesar_imagen_en_paralelo(ruta_imagen, num_partes):
     for p in procesos:
         p.join()
     
-    return resultados
+    return resultados, imagen.shape  # Devolver también la forma original de la imagen
+
+def combinar_partes(partes_procesadas, imagen_shape, num_partes):
+    alto, ancho, _ = imagen_shape
+    altura_parte = alto // num_partes
+    imagen_final = np.zeros(imagen_shape, dtype=np.uint8)
+    
+    for i, parte in enumerate(partes_procesadas):
+        inicio = i * altura_parte
+        fin = (i + 1) * altura_parte if i < num_partes - 1 else alto
+        imagen_final[inicio:fin, :, :] = parte
+    
+    return imagen_final
 
 if __name__ == "__main__":
     ruta_imagen = '/home/diego/Escritorio/TP compu2/imagen/um_logo.png'
     num_partes = 4
-    partes_procesadas = procesar_imagen_en_paralelo(ruta_imagen, num_partes)
-    for i, parte in enumerate(partes_procesadas):
-        parte_imagen = Image.fromarray(np.uint8(parte))
-        parte_imagen = parte_imagen.convert("RGB")  # Convertir a modo RGB
-        parte_imagen.save(f'/home/diego/Escritorio/TP compu2/resultado_comunicacion_y_sincronizacion/parte_combinada_{i}.jpg')
+    partes_procesadas, imagen_shape = procesar_imagen_en_paralelo(ruta_imagen, num_partes)
+    
+    imagen_final = combinar_partes(partes_procesadas, imagen_shape, num_partes)
+    
+    parte_imagen = Image.fromarray(imagen_final)
+    parte_imagen = parte_imagen.convert("RGB")  
+    parte_imagen.save(f'/home/diego/Escritorio/TP compu2/resultado_comunicacion_y_sincronizacion/imagen_final.jpg')

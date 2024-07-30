@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image  
 
 def aplicar_filtro(parte):
-    return gaussian_filter(parte, sigma=10)
+    return gaussian_filter(parte, sigma=1)
 
 def procesar_partes(partes):
     with multiprocessing.Pool(processes=len(partes)) as pool:
