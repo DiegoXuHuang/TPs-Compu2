@@ -39,7 +39,7 @@ def combinar_partes(partes_procesadas, imagen_shape, num_partes):
     return imagen_final
 
 if __name__ == "__main__":
-    ruta_imagen = '/home/diego/Escritorio/TP compu2/imagen/um_logo.png'
+    ruta_imagen = '/Users/diego/Desktop/TPs-Compu2/TP compu2/imagen/um_logo.png'
     num_partes = 4
     partes_procesadas, imagen_shape = procesar_imagen_en_paralelo(ruta_imagen, num_partes)
     
@@ -47,4 +47,4 @@ if __name__ == "__main__":
     
     parte_imagen = Image.fromarray(imagen_final)
     parte_imagen = parte_imagen.convert("RGB")  
-    parte_imagen.save(f'/home/diego/Escritorio/TP compu2/resultado_comunicacion_y_sincronizacion/imagen_final.jpg')
+    parte_imagen.save(f'/Users/diego/Desktop/TPs-Compu2/TP compu2/resultado_comunicacion_y_sincronizacion/imagen_final.jpg')

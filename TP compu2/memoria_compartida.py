@@ -1,59 +1,52 @@
 import multiprocessing
-from PIL import Image
 import numpy as np
+from PIL import Image
 from carga_y_division import cargar_imagen, dividir_imagen
 from procesamiento_paralelo import aplicar_filtro
+import os
 
-def procesar_parte(index, array, parte):
+def procesar_parte(shared_array, shape, start_idx, parte):
     resultado = aplicar_filtro(parte)
-    array[index] = resultado.flatten()  # Aplanar la imagen para almacenamiento en memoria compartida
+    shared_array[start_idx:start_idx+len(resultado.flatten())] = resultado.flatten()
 
 def procesar_imagen_en_paralelo(ruta_imagen, num_partes):
     imagen = cargar_imagen(ruta_imagen)
     partes = dividir_imagen(imagen, num_partes)
     
-    # Crear un array compartido para los resultados
-    image_width, image_height = imagen.size
-    array_size = image_width * (image_height // num_partes) * 3  # RGB -> 3 canales
-    shared_array = multiprocessing.Array('b', array_size * num_partes)  # 'b' para datos byte
+    alto, ancho, canales = imagen.shape
+    total_size = alto * ancho * canales
+    shared_array = multiprocessing.Array('d', total_size)  # Crear un array compartido
 
     procesos = []
+    start_idx = 0
+    
     for i in range(num_partes):
-        p = multiprocessing.Process(target=procesar_parte, args=(i, shared_array, partes[i]))
+        parte = partes[i]
+        p = multiprocessing.Process(target=procesar_parte, args=(shared_array, imagen.shape, start_idx, parte))
         procesos.append(p)
         p.start()
+        start_idx += parte.size  # Actualizar el índice de inicio
     
     for p in procesos:
         p.join()
-
-    # Reconstruir las partes desde el array compartido
-    resultados = []
-    for i in range(num_partes):
-        parte_size = image_width * (image_height // num_partes) * 3
-        start = i * parte_size
-        end = (i + 1) * parte_size
-        parte_array = np.frombuffer(shared_array.get_obj(), dtype=np.uint8)[start:end]
-        parte_imagen = Image.fromarray(parte_array.reshape((image_height // num_partes, image_width, 3)))
-        resultados.append(parte_imagen)
-
-    return resultados, imagen.size
-
-def combinar_imagenes(resultados, imagen_size, num_partes):
-    image_width, image_height = imagen_size
-    partes_height = image_height // num_partes
-    imagen_final = Image.new('RGB', (image_width, image_height))
-
-    for i, resultado in enumerate(resultados):
-        parte_y_start = i * partes_height
-        parte_y_end = (i + 1) * partes_height
-        imagen_final.paste(resultado, (0, parte_y_start))
-
-    return imagen_final
+    
+    # Convertir el array compartido de nuevo a una imagen numpy
+    resultado_array = np.frombuffer(shared_array.get_obj())
+    resultado_array = resultado_array.reshape(alto, ancho, canales)
+    
+    return resultado_array
 
 if __name__ == "__main__":
-    ruta_imagen = '/home/diego/Escritorio/TP compu2/imagen/um_logo.png'
+    ruta_imagen = '/Users/diego/Desktop/TPs-Compu2/TP compu2/imagen/um_logo.png'
     num_partes = 4
-    partes_procesadas, imagen_size = procesar_imagen_en_paralelo(ruta_imagen, num_partes)
-    imagen_final = combinar_imagenes(partes_procesadas, imagen_size, num_partes)
-    imagen_final.save('/home/diego/Escritorio/TP compu2/resultado_memoria_compartida/imagen_combinada.jpg')
-    imagen_final.show()  # Para mostrar la imagen final
+    imagen_final = procesar_imagen_en_paralelo(ruta_imagen, num_partes)
+    
+    # Crear el directorio si no existe
+    directorio_resultado = '/Users/diego/Desktop/TPs-Compu2/TP compu2/resultado_memoria_compartida'
+    if not os.path.exists(directorio_resultado):
+        os.makedirs(directorio_resultado)
+    
+    imagen_final = Image.fromarray(np.uint8(imagen_final))
+    imagen_final = imagen_final.convert("RGB")
+    imagen_final.save(f'{directorio_resultado}/imagen_final.jpg')
+    print(f'Imagen final procesada y guardada como {directorio_resultado}/imagen_final.jpg')

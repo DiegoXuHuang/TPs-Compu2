@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     print("Presiona Ctrl+C para interrumpir el proceso o espere 15 segundo hasta que se termine la ejecucion")
     
-    ruta_imagen = '/home/diego/Escritorio/TP compu2/imagen/um_logo.png'
+    ruta_imagen = '/Users/diego/Desktop/TPs-Compu2/TP compu2/imagen/um_logo.png'
     num_partes = 4
     try:
         partes_procesadas = procesar_imagen_en_paralelo(ruta_imagen, num_partes)
@@ -72,7 +72,7 @@ if __name__ == "__main__":
         time.sleep(15)
         
         # Crear el directorio si no existe
-        directorio_resultado = '/home/diego/Escritorio/TP compu2/resultado_manejo_de_senales'
+        directorio_resultado = '/Users/diego/Desktop/TPs-Compu2/TP compu2/resultado_manejo_de_senales'
         if not os.path.exists(directorio_resultado):
             os.makedirs(directorio_resultado)
         
@@ -86,4 +86,4 @@ if __name__ == "__main__":
         print(f"Error: {e}")
     finally:
         print("Esperando a que los procesos terminen...")
-        time.sleep(5)  # Esperar 5 segundos adicionales para permitir la limpieza completa
+        time.sleep(5)  
